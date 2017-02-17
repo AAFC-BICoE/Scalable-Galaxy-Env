@@ -1,0 +1,17 @@
+- name: Delete on Openstack
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Delete an instance
+    os_server:
+         validate_certs: False
+         state: absent
+         name: vm1
+         image: d2a732ec-43d0-4b24-a0e8-df5194a5cf58
+         key_name: cloudKeyKat
+         network: 1cd05aa3-7a0e-48f9-beef-89d4d0b07f27
+         timeout: 200
+         flavor: 2
+         wait: yes
+   - name: Delete from galaxy.ini
+     
