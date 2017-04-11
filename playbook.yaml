@@ -15,6 +15,7 @@
          flavor: '{{flavor_name}}'
          wait: yes
          reuse_ips: False
+         security_groups: '{{security_group}}'
     register: myserver
 
   - debug:

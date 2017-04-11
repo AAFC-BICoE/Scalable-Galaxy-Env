@@ -7,11 +7,17 @@
          validate_certs: False
          state: absent
          name: vm1
-         image: d2a732ec-43d0-4b24-a0e8-df5194a5cf58
-         key_name: cloudKeyKat
-         network: 1cd05aa3-7a0e-48f9-beef-89d4d0b07f27
+         image: '{{image_id}}'
+         key_name: '{{key_name}}'
+         network: '{{private_network}}'
          timeout: 200
          flavor: 2
          wait: yes
-   - name: Delete from galaxy.ini
-     
+  - name: Delete from galaxy.ini
+    shell: crudini --del /home/ubuntu/galaxy/config/galaxy.ini server:{{handlerid}}
+  - name: Edit job_conf
+    shell: sed -i '/<handler id="{{vmName}}" tags="handlers"\/>/d' /home/ubuntu/galaxy/config/job_conf.xml
+  - name: Stop web server
+    shell: cd /home/ubuntu/galaxy/; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --stop-daemon
+  - name: Restart web server
+    shell: cd /home/ubuntu/galaxy/; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --daemon 
