@@ -12,9 +12,12 @@ do
 	handlers[$i]=$k
 	i=$(( $i+1 ))
 done
+echo "After the for loop"
 handler="handler"
+
 #echo ${handlers[*]}
 echo ${#handlers[@]}
+echo "Before the confitional"
 if [ ${#handlers[@]} -eq 0 ];
 then
 	NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
@@ -29,6 +32,7 @@ then
         ansible-playbook --extra-vars "vmName=$new_name" --extra-vars "webAddress=$webAddress" --extra-vars "webInternalAddress=$webInternalAddress" --extra-vars "port=$port" --extra-vars "handlerid=$new_name" --extra-vars "image_id=$image_id" --extra-vars "flavor_name=$flavor" --extra-vars "private_network=$private_network" --extra-vars "key_name=$key_name" --extra-vars "private_key_name=$private_key_name" --extra-vars "security_group=$security_group" /home/ubuntu/playbook.yaml
         exit 0
 fi
+echo "After the conditional"
 i=0
 output=0
 flag="True"
