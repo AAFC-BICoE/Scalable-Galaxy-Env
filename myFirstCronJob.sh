@@ -4,6 +4,7 @@ max=5
 
 i=0
 iniHandlers=($(grep -e "\[server:handler.*\]" /home/ubuntu/galaxy/config/galaxy.ini))
+echo "I did this"
 for k in "${iniHandlers[@]}"
 do
 	k=${k#[server:}
