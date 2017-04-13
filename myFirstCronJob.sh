@@ -22,7 +22,7 @@ if [ ${#handlers[@]} -eq 0 ];
 then
 	echo "1"
 	#NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
-	NEW_UUID="anewhandler"
+	NEW_UUID=$(uuidgen)
         echo "2"
         new_name=$handler-$NEW_UUID
 	echo "3"
@@ -81,8 +81,9 @@ if [[ "$flag2" == "True" ]]; then
 	if [ "${#handlers[@]}" -lt "$max" ];
 	then
 		#launch ansible creation playbook
-		NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
-		new_name=$handler-$NEW_UUID
+		#NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
+		NEW_UUID=$(uuidgen)
+                new_name=$handler-$NEW_UUID
 		echo $new_name >> handlers.txt
 #		echo $new_name
         	webAddress=$(crudini --get /home/ubuntu/galaxy/config/galaxy.ini server:main host) 
