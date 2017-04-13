@@ -20,13 +20,20 @@ echo ${#handlers[@]}
 echo "Before the confitional"
 if [ ${#handlers[@]} -eq 0 ];
 then
+	echo "1"
 	NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
+	echo "2"
         new_name=$handler-$NEW_UUID
+	echo "3"
         echo $new_name >> handlers.txt
 #               echo $new_name
+ 	echo "4"
         webAddress=$(crudini --get /home/ubuntu/galaxy/config/galaxy.ini server:main host)
+	echo "5"
         webInternalAddress=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+	echo "6"
 	port=$(crudini --get /home/ubuntu/galaxy/config/galaxy.ini server:web0 port)
+	echo "7"
         port=$((port + 1))
         echo "I got here"
         ansible-playbook --extra-vars "vmName=$new_name" --extra-vars "webAddress=$webAddress" --extra-vars "webInternalAddress=$webInternalAddress" --extra-vars "port=$port" --extra-vars "handlerid=$new_name" --extra-vars "image_id=$image_id" --extra-vars "flavor_name=$flavor" --extra-vars "private_network=$private_network" --extra-vars "key_name=$key_name" --extra-vars "private_key_name=$private_key_name" --extra-vars "security_group=$security_group" /home/ubuntu/playbook.yaml
