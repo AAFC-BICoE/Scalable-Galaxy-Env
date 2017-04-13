@@ -21,8 +21,9 @@ echo "Before the confitional"
 if [ ${#handlers[@]} -eq 0 ];
 then
 	echo "1"
-	NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
-	echo "2"
+	#NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
+	NEW_UUID="anewhandler"
+        echo "2"
         new_name=$handler-$NEW_UUID
 	echo "3"
         echo $new_name >> handlers.txt
