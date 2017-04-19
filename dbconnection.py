@@ -15,6 +15,10 @@ sys.path.insert( 1, os.path.join( galaxy_root, 'lib' ) )
 from galaxy.model import *
 from galaxy.model.mapping import init
 from galaxy.model.orm.scripts import get_config
+import argparse
+parser = argparse.ArgumentParser(description="Handler id")
+parser.add_argument('-handler','--handler', help="Handler id")
+args = parser.parse_args()
 #from galaxy.util import bunch
 #sys.path.append("/home/ubuntu/galaxy/lib/galaxy/util")
 #import bunch
@@ -56,7 +60,7 @@ resultUPLOAD = sa_session.execute(jobsUPLOAD)
 #	print str(job.items()[-1][-1])
 #	break
 
-handler = 'handler0'
+handler = args.handler
 flagNew = False
 for job in resultNEW:
 	if job.items()[-1][-1] == handler:
@@ -79,7 +83,8 @@ for job in resultUPLOAD:
 
 if flagNew or flagQueued or flagRunning or flagUpload:
 	print True		
-
+else:
+	print False
 #engine = create_engine( dburl )
 #metadata = MetaData( engine )
 #sa_session = scoped_session( sessionmaker( bind=engine, autoflush=False, autocommit=True ) )

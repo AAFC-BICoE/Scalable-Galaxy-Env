@@ -3,7 +3,15 @@ min=1
 max=5
 
 i=0
-iniHandlers=($(grep -e "\[server:handler.*\]" /home/ubuntu/galaxy/config/galaxy.ini))
+if [ $(grep -e "\[server:handler.*\]" /home/ubuntu/galaxy/config/galaxy.ini) -eq 1 ];
+then 
+	iniHandlers=$(grep -e "\[server:handler.*\]" /home/ubuntu/galaxy/config/galaxy.ini)
+	echo $iniHandlers
+else
+	iniHandlers=( $(grep -e "\[server:handler.*\]" /home/ubuntu/galaxy/config/galaxy.ini) )
+fi
+#iniHandlers=()
+#iniHandlers=( $(grep -e "\[server:handler.*\]" /home/ubuntu/galaxy/config/galaxy.ini) )
 echo "I did this"
 for k in "${iniHandlers[@]}"
 do
@@ -48,8 +56,9 @@ flag="True"
 
 while [ $output -eq 0 ];
 do 
-	
-	result=$(python /home/ubuntu/galaxy/scripts/dbconnection.py --handler=${handlers[$i]})
+ 	echo "first handler " ${handlers[$i]}	
+	result=$(python /home/ubuntu/galaxy/scripts/dbconnection.py -handler=${handlers[$i]})
+        echo "handlers " + ${handlers[$1]}
    	if [[ "$result" == "False" ]];then
 		flag="False"
 	fi
@@ -78,7 +87,7 @@ done
 echo $flag2
 echo $i
 if [[ "$flag2" == "True" ]]; then
-	if [ "${#handlers[@]}" -lt "$max" ];
+	if [ "${#handlers[@]}" -lt "$max" -a "${#handlers[@]}" -ge "$min" ];
 	then
 		#launch ansible creation playbook
 		#NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1)
