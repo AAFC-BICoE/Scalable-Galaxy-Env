@@ -16,3 +16,6 @@ Requirements:
 4. You will need to change the relevant information for your Openstack account. Since ansible will take care of creating and deleting instances, it needs Openstack credentials to do this, and therefore an rc file. It is easiest to just provide the relevant information in the file rather than transfer a copy of your openrc file to the web server. Here are the variables that will need to be changed in the web server user_data paramter: OS_USERNAME, OS_PASSWORD, OS_TENANT_NAME, OS_AUTH_URL, OS_REGION_NAME, ENDPOINT_TYPE, OS_INTERFACE, OS_IDENTITY_API_VERSION. Again these parameter values can be found from your admin-openrc file on the Openstack Horizon dashboard. It is under Access & Security -> API Access -> Download Openstack RC File.
 
 5. Make sure the git link for Galaxy is still accessible. The one in the file is currently: https://github.com/galaxyproject/galaxy.git, using release 17.01.
+
+Instructions:
+1. Once the heat template is on a controller node, type in this command: heat stack-create -f hello_world.yaml "stack-name". To follow the logs, it will be on the instances created, in /var/log/cloud-init-output.log.
