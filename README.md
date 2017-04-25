@@ -20,7 +20,6 @@ Requirements:
 ### Image
 3. You will need an Ubuntu image, preferably 14.04. Here is a link to a website where you can get the image for free: http://releases.ubuntu.com/14.04/. The name of the image needs to be changed in the heat template. To get the image id from the Openstack API type: `nova image-list`
 * Line 20: (Image id)
-* Line 35: (Image id)
 
 ### Authentication with Openstack
 4. You will need to change the relevant information for your Openstack account. Since ansible will take care of creating and deleting instances, it needs Openstack credentials to do this, and therefore an rc file. It is easiest to just provide the relevant information in the file rather than transfer a copy of your openrc file to the web server. Here are the variables that will need to be changed in the web server user_data parameter: OS_USERNAME, OS_PASSWORD, OS_TENANT_NAME, OS_AUTH_URL, OS_REGION_NAME, ENDPOINT_TYPE, OS_INTERFACE, OS_IDENTITY_API_VERSION. Again these parameter values can be found from your admin-openrc file on the Openstack Horizon dashboard. It is under Access & Security -> API Access -> Download Openstack RC File. Lines to be changed:
