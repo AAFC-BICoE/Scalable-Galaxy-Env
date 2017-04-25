@@ -1,4 +1,6 @@
-# Scalable-Galaxy-Env
+# Scalable Galaxy Environment
+
+This is a much simpler version of the existing CloudMan software for creating Galaxy clusters. This software system works by staging a web server and a database server in Openstack using some existing parameters outlined below. Once those servers are set-up, the web server sets up an initial handler server. A cron job then monitors the Galaxy database to decide whether or not to scale the existing Galaxy handlers, based on the number of jobs that exist on each handler.
 
 The heat template, currently called hello_world.yaml needs to be placed on a controller node for your environment. Currently untested with the Horizon dashboard.
 
