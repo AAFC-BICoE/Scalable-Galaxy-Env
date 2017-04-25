@@ -1,0 +1,161 @@
+- name: Deploy on Openstack
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+  - name: Deploy an instance
+    os_server:
+         validate_certs: False
+         state: present
+         name: '{{vmName}}'
+         image: '{{image_id}}'
+         key_name: '{{key_name}}'
+         network: '{{private_network}}' 
+         timeout: 200
+         flavor: '{{flavor_name}}'
+         wait: yes
+         reuse_ips: False
+         security_groups: '{{security_group}}'
+    register: myserver
+
+  - debug:
+      msg: "System has ip {{ myserver.server.public_v4 }}"
+  - add_host:
+      name: myserver
+      groups: myserver
+      ansible_host: "{{ myserver.server.public_v4 }}"
+      ansible_ssh_host: "{{myserver.server.public_v4}}"
+      ansible_ssh_user: ubuntu
+      ansible_ssh_private_key_file: /home/ubuntu/{{private_key_name}}
+      host_key_checking: False
+
+  - name: Wait for SSH on the Instance
+    command: >
+      ssh -i {{private_key_name}} -o "StrictHostKeyChecking no"
+      ubuntu@{{ myserver.server.public_v4 }} 
+    register: result
+    until: result|success
+    retries: 30
+    delay: 10
+ 
+- name: Configure new VM
+  hosts: myserver
+  become_user: root
+  become: yes  
+
+  tasks: 
+  - name: Configure Instance
+    apt: 
+      name: git 
+      state: latest
+      force: yes
+      update_cache: yes 
+  - name: Install NFS-nfs-common
+    apt: 
+      name: nfs-common
+      state: latest
+      force: yes
+  - name: Install NFS-rpcbind
+    apt: 
+      name: rpcbind
+      state: latest
+      force: yes
+  - name: Install crudini
+    apt: 
+      name: crudini
+      state: latest
+      force: yes
+  - name: Install g++
+    apt:
+      name: g++
+      state: latest
+      force: yes
+  - name: Instal xmlstarlet
+    apt:
+      name: xmlstarlet
+      state: latest
+      force: yes
+#  - name: Update database connection
+#    shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini app:main database_connection postgresql://ubuntu@{{ webAddress }}/ubuntu
+#  - name: Mount database folder
+#    shell: mount {{ webInternalAddress }}:/home/ubuntu/galaxy/database /home/ubuntu/galaxy/database
+#  - name: Make database folder mount permanent
+#    shell: echo "{{ webInternalAddress }}:/home/ubuntu/galaxy/database /home/ubuntu/galaxy/database nfs rw,sync,hard,intr 0 0" >> /etc/fstab
+#  - name: Create virtualenv folder
+#    shell: mkdir /home/ubuntu/galaxy/.venv
+#  - name: Mount virtualenv folder
+#    shell: mount {{ webInternalAddress }}:/home/ubuntu/galaxy/.venv /home/ubuntu/galaxy/.venv
+#  - name: Make virtualenv folder mount permanent
+#    shell: echo "{{ webInternalAddress }}:/home/ubuntu/galaxy/.venv /home/ubuntu/galaxy/.venv nfs rw,sync,hard,intr 0 0" >> /etc/fstab
+#  - name: Create shed_tools folder
+#    shell: mkdir /home/ubuntu/shed_tools
+#  - name: Mount shed_tools directory
+#    shell: mount {{ webInternalAddress }}:/home/ubuntu/shed_tools /home/ubuntu/shed_tools
+#  - name: Make shed_tools folder mount permanent
+#    shell: echo "{{ webInternalAddress }}:/home/ubuntu/shed_tools /home/ubuntu/shed_tools nfs rw,sync,hard,intr 0 0" >> /etc/fstab
+  - name: Create galaxy folder
+    shell: mkdir galaxy
+  - name: Mount galaxy folder
+    shell: mount {{ webInternalAddress }}:/home/ubuntu/galaxy /home/ubuntu/galaxy
+  - name: Make mount permanent
+    shell: echo "{{ webInternalAddress }}:/home/ubuntu/galaxy /home/ubuntu/galaxy nfs rw,sync,hard,intr 0 0" >> /etc/fstab
+  - name: Create shed_tools folder
+    shell: mkdir shed_tools
+  - name: Mount shed_tools folder
+    shell: mount {{ webInternalAddress }}:/home/ubuntu/shed_tools /home/ubuntu/shed_tools
+  - name: Make mount permanent
+    shell: echo "{{ webInternalAddress }}:/home/ubuntu/shed_tools /home/ubuntu/shed_tools nfs rw,sync,hard,intr 0 0" >> /etc/fstab
+  - name: Update galaxy.ini with server information Line 1
+    shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} use egg:Paste#http
+  - name: Update galaxy.ini with server information Line 2
+    shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} port {{ port }}
+  - name: Update galaxy.ini with server information Line 3
+    shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} host 0.0.0.0
+  - name: Update galaxy.ini with server information Line 4
+    shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} use_threadpool true
+  - name: Update galaxy.ini with server information Line 5
+    shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} threadpool_workers 5
+  - name: Make temporary job handlers file
+    shell: cp /home/ubuntu/galaxy/config/job_conf.xml /home/ubuntu/galaxy/config/job_conf.temp.xml
+  - name: Insert handlers information
+    shell: xmlstarlet ed --subnode /job_conf/handlers --type elem -n handler --subnode '/job_conf/handlers/handler[last()]' --type attr -n id -v {{ handlerid }} --subnode '/job_conf/handlers/handler[last()]' --type attr -n tags -v handlers  /home/ubuntu/galaxy/config/job_conf.temp.xml >| /home/ubuntu/galaxy/config/job_conf.xml
+   #shell: sh xmladder.sh {{ handlerid }} /home/ubuntu/galaxy/config/job_conf.temp.xml /home/ubuntu/galaxy/config/job_conf.xml
+  - name: Start handler
+    shell: . /home/ubuntu/galaxy/.venv/bin/activate; cd /home/ubuntu/galaxy; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name={{ handlerid }} --pid-file=/home/ubuntu/galaxy/{{ handlerid }}.pid --log-file=/home/ubuntu/galaxy/{{ handlerid }}.log --daemon
+- name: Restart web server
+  hosts: localhost
+
+  tasks: 
+  - name: Shutdown web server
+    shell: cd /home/ubuntu/galaxy/; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --stop-daemon
+  - name: Restart web server
+    shell: cd /home/ubuntu/galaxy/; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --daemon
+ # - name: Create virtualenv 
+ #   shell: sh /home/ubuntu/galaxy/run.sh --daemon
+ # - name: Start the galaxy handler process
+ #   shell: . /home/ubuntu/galaxy/.venv/bin/activate; cd /home/ubuntu/galaxy/; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name={{ handlerid }} --pid-file=/home/ubuntu/galaxy/{{ handlerid }}.pid --log-file=/home/ubuntu/galaxy/{{ handlerid }}.log --daemon
+
+# - name: Configure web server configuration for new handler
+ # hosts: localhost
+  
+ # tasks:
+ # - name: Update galaxy.ini with server information Line 1
+ #   shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} use egg:Paste#http
+ # - name: Update galaxy.ini with server information Line 2
+ #   shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} port {{ port }}
+ # - name: Update galaxy.ini with server information Line 3
+ #   shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} host {{ myserver.server.public_v4 }}
+ # - name: Update galaxy.ini with server information Line 4
+ #   shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} use_threadpool true
+ # - name: Update galaxy.ini with server information Line 5
+ #   shell: crudini --set /home/ubuntu/galaxy/config/galaxy.ini server:{{ handlerid }} threadpool_workers 5
+ # - name: Make temporary job handlers file
+ #   shell: cp /home/ubuntu/galaxy/config/job_conf.xml /home/ubuntu/galaxy/config/job_conf.temp.xml
+ # - name: Insert handlers information
+ #   shell: sh xmladder.sh {{ handlerid }} /home/ubuntu/galaxy/config/job_conf.temp.xml /home/ubuntu/galaxy/config/job_conf.xml
+ # - name: Restart web server
+ #   shell: cd /home/ubuntu/galaxy/; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --stop-daemon
+ # - name: Start web server
+ #   shell: cd /home/ubuntu/galaxy/; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --daemon
+
+
