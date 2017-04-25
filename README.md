@@ -2,7 +2,7 @@
 
 This is a much simpler version of the existing CloudMan software for creating Galaxy clusters. This software system works by staging a web server and a database server in Openstack using some existing parameters outlined below. Once those servers are set-up, the web server sets up an initial handler server. A cron job then monitors the Galaxy database to decide whether or not to scale the existing Galaxy handlers, based on the number of jobs that exist on each handler.
 
-The heat template, currently called hello_world.yaml needs to be placed on a controller node for your environment. Currently untested with the Horizon dashboard.
+The heat template, currently called webAndDBTemplate.yaml needs to be placed on a controller node for your environment. Currently untested with the Horizon dashboard.
 
 Requirements:
 * It isn't necessary that your instances have DNS resolution but it makes some things easier, such as reducing the time needed to log into your Openstack instances.
@@ -11,7 +11,8 @@ Requirements:
 1. Public-private key pair available within Openstack. The private key should be available on the controller from which you put the heat template on. The correct name of the public and private key names should be updated in the heat template.
 * Line 10: (Key name in openstack)
 * Line 11: (Private key file name)
-* Line 76: (Private key file name after /home/ubuntu/), (File Path for private key on controller)
+* Line 68: (Private key file name, Private key file name)
+* Line 75: (Private key file name after /home/ubuntu/), (File Path for private key on controller)
 
 ### Networking
 2. You need a private and public network accessible from Openstack. Obtain the net-ids for both and substitute in the parmeters section of the heat template. To get the net-ids, on the controller node type `neutron net-list` and `neutron subnet-list`.
@@ -37,5 +38,5 @@ Requirements:
 5. Make sure the git link for Galaxy is still accessible. The one in the file is currently: https://github.com/galaxyproject/galaxy.git, using release 17.01.
 
 # Instructions:
-1. Once the heat template is on a controller node, type in this command: heat stack-create -f hello_world.yaml "stack-name". To follow the logs, it will be on the instances created, in /var/log/cloud-init-output.log.
+1. Once the heat template is on a controller node, type in this command: heat stack-create -f webAndDBTemplate.yaml "stack-name". To follow the logs, it will be on the instances created, in /var/log/cloud-init-output.log.
 2. Once set up, the Galaxy cluster will be accessible using the ip address of the web server on port 8080.
