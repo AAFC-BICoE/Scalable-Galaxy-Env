@@ -133,7 +133,7 @@ resources:
                   su - ubuntu -c "sudo apt-get -y install python-dev"
                   su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; pip install shade"
                   su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; . /home/ubuntu/admin-openrc.sh; cd /home/ubuntu/; ./myFirstCronJob.sh"
-                  su - ubuntu -c "cp /home/ubuntu/galaxy/job_conf.xml /home/ubuntu/galaxy/job_conf.temp.xml"
+                  su - ubuntu -c "cp /home/ubuntu/galaxy/config/job_conf.xml /home/ubuntu/galaxy/config/job_conf.temp.xml"
                   su - ubuntu -c sed\ -i\ '/<handler\ id="handler1"/d' job_conf.temp.xml\ >job_conf.xml
                   su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; cd /home/ubuntu/galaxy; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --stop-daemon"
                   su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; cd /home/ubuntu/galaxy; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --daemon"
