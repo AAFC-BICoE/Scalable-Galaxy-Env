@@ -37,6 +37,9 @@ Requirements:
 ### Galaxy Version
 5. Make sure the git link for Galaxy is still accessible. The one in the file is currently: https://github.com/galaxyproject/galaxy.git, using release 17.01.
 
+### Security Group
+6. If running this template for the first time, the template can be used as is and it will create the appropriate security group for you. If running it for a second time, and any time after that, you will need to comment out the resource that creates the security group called 'external access' which encompass lines 153- 180.
+
 # Instructions:
 1. Once the heat template is on a controller node, type in this command: heat stack-create -f webAndDBTemplate.yaml "stack-name". To follow the logs, it will be on the instances created, in /var/log/cloud-init-output.log.
 2. Once set up, the Galaxy cluster will be accessible using the ip address of the web server on port 8080.
