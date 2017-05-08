@@ -36,6 +36,10 @@ parameters:
         type: string
         description: Id of the public network for galaxy cluster. Ends up being admin_floating_net.
         default: <Public network id>
+    security_group_id:
+        type: string
+        description: ID of security group for this instance port
+        default: external_access
 
 resources:
     my_database_server:
@@ -144,7 +148,8 @@ resources:
                   key_name_web: { get_param: key_name }
                   flavor_name_web: { get_param: flavor } 
                   private_key_name_web: { get_param: private_key_name }
-                  security_group_web: external_access
+                  security_group_id: { get_param: security_group_id }
+                  security_group_web: { get_param: security_group_id }
     external_access:
         type: OS::Neutron::SecurityGroup
         properties:
@@ -180,7 +185,7 @@ resources:
           fixed_ips:
           - subnet_id: { get_param: private-subnet }
           security_groups:
-          - { get_resource: external_access }
+          - { get_param: security_group_id }
     floating_web_ip:
         type: OS::Neutron::FloatingIP
         properties:
@@ -193,7 +198,7 @@ resources:
            fixed_ips:
            - subnet_id: { get_param: private-subnet }
            security_groups:
-           - { get_resource: external_access }
+           - { get_param: security_group_id }
     floating_database_ip:
         type: OS::Neutron::FloatingIP
         properties: 
