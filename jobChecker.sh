@@ -1,6 +1,6 @@
 #/bin/bash
-source /home/ubuntu/admin-openrc
-source /home/ubuntu/galaxy/.venv/bin/activate
+source /home/ubuntu/admin-openrc.sh
+source /home/ubuntu/galaxy/.venv/bin/activate.sh
 min=1
 max=5
 output=$(grep -e "server:handler.*" /home/ubuntu/galaxy/config/galaxy.ini | wc -l)
