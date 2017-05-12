@@ -42,6 +42,60 @@ parameters:
         default: external_access
 
 resources:
+    external_access:
+        type: OS::Neutron::SecurityGroup
+        properties:
+          name: external_access
+          description: incoming traffic access
+          rules: [
+          {remote_ip_prefix: 0.0.0.0/0,
+            protocol: tcp,
+            port_range_min: 8080,
+            port_range_max: 8080},
+          {remote_ip_prefix: 0.0.0.0/0,
+            protocol: tcp,
+            port_range_min: 22,
+            port_range_max: 22},
+          {remote_ip_prefix: 0.0.0.0/0,
+            protocol: tcp,
+            port_range_min: 5432,
+            port_range_max: 5432},
+          { remote_ip_prefix: 0.0.0.0/0,
+            protocol: icmp},
+          { remote_ip_prefix: 0.0.0.0/0,
+            protocol: tcp,
+            port_range_min: 2049,
+            port_range_max: 2049},
+          { remote_ip_prefix: 0.0.0.0/0,
+            protocol: udp,
+            port_range_min: 2049,
+            port_range_max: 2049}]
+    public_web_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_param: private-network }
+          fixed_ips:
+          - subnet_id: { get_param: private-subnet }
+          security_groups:
+          - { get_param: security_group_id }
+    floating_web_ip:
+        type: OS::Neutron::FloatingIP
+        properties:
+           floating_network_id: { get_param: public-network }
+           port_id: { get_resource: public_web_port }
+    public_database_port:
+        type: OS::Neutron::Port
+        properties:
+           network_id: { get_param: private-network }
+           fixed_ips:
+           - subnet_id: { get_param: private-subnet }
+           security_groups:
+           - { get_param: security_group_id }
+    floating_database_ip:
+        type: OS::Neutron::FloatingIP
+        properties: 
+           floating_network_id: { get_param: public-network }
+           port_id: { get_resource: public_database_port }
     my_database_server:
         type: OS::Nova::Server
         properties: 
@@ -104,6 +158,7 @@ resources:
                   su - ubuntu -c "mv /home/ubuntu/Scalable-Galaxy-Env/handlerCreation.yaml /home/ubuntu/"
                   su - ubuntu -c "mv /home/ubuntu/Scalable-Galaxy-Env/xmladder.sh /home/ubuntu/"
                   su - ubuntu -c "mv /home/ubuntu/Scalable-Galaxy-Env/dbconnection.py /home/ubuntu/galaxy/scripts/"
+                  su - ubuntu -c "cp /home/ubuntu/galaxy/config/job_conf.xml.sample_basic /home/ubuntu/galaxy/config/job_conf.xml"
                   su - ubuntu -c "cp /home/ubuntu/galaxy/config/job_conf.xml /home/ubuntu/galaxy/config/job_conf.temp.xml"
                   su - ubuntu -c "xmlstarlet ed --insert '/job_conf/handlers' --type attr -n default -v handlers /home/ubuntu/galaxy/config/job_conf.temp.xml > /home/ubuntu/galaxy/config/job_conf.xml"
                   su - ubuntu -c "sed -i '/<handler\ .*/d' /home/ubuntu/galaxy/config/job_conf.xml" 
@@ -136,11 +191,16 @@ resources:
                   su - ubuntu -c "chmod u+x /home/ubuntu/jobChecker.sh"
                   su - ubuntu -c "sudo apt-get -y install python-dev"
                   su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; pip install shade"
-                  su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; . /home/ubuntu/admin-openrc.sh; cd /home/ubuntu/; ./myFirstCronJob.sh"
+                  su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; . /home/ubuntu/admin-openrc.sh; cd /home/ubuntu/; ./jobChecker.sh"
                   su - ubuntu -c "cp /home/ubuntu/galaxy/config/job_conf.xml /home/ubuntu/galaxy/config/job_conf.temp.xml"
-                  su - ubuntu -c sed\ -i\ '/<handler\ id="handler1"/d' /home/ubuntu/galaxy/config/job_conf.temp.xml\ >/home/ubuntu/galaxy/config/job_conf.xml
+                  su - ubuntu -c "sed -i '/handler1/d' /home/ubuntu/galaxy/config/job_conf.temp.xml > /home/ubuntu/galaxy/config/job_conf.xml
+                  su - ubuntu -c "cp /home/ubuntu/galaxy/config/job_conf.temp.xml /home/ubuntu/galaxy/config/job_conf.xml"
                   su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; cd /home/ubuntu/galaxy; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --stop-daemon"
                   su - ubuntu -c ". /home/ubuntu/galaxy/.venv/bin/activate; cd /home/ubuntu/galaxy; python /home/ubuntu/galaxy/scripts/paster.py serve config/galaxy.ini --server-name=web0 --pid-file=/home/ubuntu/galaxy/web0.pid --log-file=/home/ubuntu/galaxy/web0.log --daemon"
+                  su - ubuntu -c "sudo touch /var/spool/cron/crontabs/ubuntu"
+                  su - ubuntu -c "sudo chown ubuntu:crontab /var/spool/cron/crontabs/ubuntu"
+                  su - ubuntu -c "sudo chmod go-r /var/spool/cron/crontabs/ubuntu"
+                  su - ubuntu -c "echo '*/30 * * * * /home/ubuntu/jobChecker.sh > /home/ubuntu/output.log 2>&1' | sudo tee --append /var/spool/cron/crontabs/ubuntu"
                 params:
                   $databaseIP: { get_attr: ["floating_database_ip", "floating_ip_address"]}
                   private_network_web: { get_param: private-network }
@@ -150,60 +210,6 @@ resources:
                   private_key_name_web: { get_param: private_key_name }
                   security_group_id: { get_param: security_group_id }
                   security_group_web: { get_param: security_group_id }
-    external_access:
-        type: OS::Neutron::SecurityGroup
-        properties:
-          name: external_access
-          description: incoming traffic access
-          rules: [
-          {remote_ip_prefix: 0.0.0.0/0,
-            protocol: tcp,
-            port_range_min: 8080,
-            port_range_max: 8080},
-          {remote_ip_prefix: 0.0.0.0/0,
-            protocol: tcp,
-            port_range_min: 22,
-            port_range_max: 22},
-          {remote_ip_prefix: 0.0.0.0/0,
-            protocol: tcp,
-            port_range_min: 5432,
-            port_range_max: 5432},
-          { remote_ip_prefix: 0.0.0.0/0,
-            protocol: icmp},
-          { remote_ip_prefix: 0.0.0.0/0,
-            protocol: tcp,
-            port_range_min: 2049,
-            port_range_max: 2049},
-          { remote_ip_prefix: 0.0.0.0/0,
-            protocol: udp,
-            port_range_min: 2049,
-            port_range_max: 2049}]
-    public_web_port:
-        type: OS::Neutron::Port
-        properties:
-          network_id: { get_param: private-network }
-          fixed_ips:
-          - subnet_id: { get_param: private-subnet }
-          security_groups:
-          - { get_param: security_group_id }
-    floating_web_ip:
-        type: OS::Neutron::FloatingIP
-        properties:
-           floating_network_id: { get_param: public-network }
-           port_id: { get_resource: public_web_port }
-    public_database_port:
-        type: OS::Neutron::Port
-        properties:
-           network_id: { get_param: private-network }
-           fixed_ips:
-           - subnet_id: { get_param: private-subnet }
-           security_groups:
-           - { get_param: security_group_id }
-    floating_database_ip:
-        type: OS::Neutron::FloatingIP
-        properties: 
-           floating_network_id: { get_param: public-network }
-           port_id: { get_resource: public_database_port }
 outputs:
     instance_name:
         description: Name of the instance
