@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 source /home/ubuntu/admin-openrc.sh
 source /home/ubuntu/galaxy/.venv/bin/activate
 min=1
